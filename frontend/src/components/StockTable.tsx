@@ -6,7 +6,6 @@ import { normalizeProductText } from '../utils/textUtils';
 import { parseStockValue } from '../utils/stockUtils';
 import { formatDate } from '../utils/textUtils';
 import { Edit, Trash2, Save, X } from 'lucide-react';
-import { ConfirmModal } from './ConfirmModal';
 import { useModal } from '../hooks/useModal';
 
 // Inline interface tanımı
@@ -32,7 +31,7 @@ export const StockTable: React.FC<StockTableProps> = ({
   const { updateItem, deleteItem, updateStock, incrementStock, decrementStock } = useStockStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<Partial<StockItem>>({});
-  const { confirmModal, showConfirmModal, hideConfirmModal, handleConfirmModalConfirm } = useModal();
+  const { showConfirmModal } = useModal();
 
   const handleEdit = (item: StockItem) => {
     setEditingId(item.id);
@@ -257,19 +256,6 @@ export const StockTable: React.FC<StockTableProps> = ({
           })}
         </tbody>
       </table>
-      
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={hideConfirmModal}
-        onConfirm={handleConfirmModalConfirm}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        product={confirmModal.product}
-        confirmText={confirmModal.confirmText}
-        cancelText={confirmModal.cancelText}
-        type={confirmModal.type}
-      />
     </div>
   );
 }; 

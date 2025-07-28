@@ -3,9 +3,6 @@ import { useStockStore } from './store/stockStore';
 import { ProductForm } from './components/ProductForm';
 import { SearchAndExport } from './components/SearchAndExport';
 import { StockTable } from './components/StockTable';
-import { InfoModal } from './components/InfoModal';
-import { ImportModal } from './components/ImportModal';
-import { useModal } from './hooks/useModal';
 
 function App() {
   const { 
@@ -15,8 +12,6 @@ function App() {
     setHasUnsavedChanges,
     getAppInfo 
   } = useStockStore();
-  
-  const { infoModal, hideInfoModal, importModal } = useModal();
 
   const filteredItems = getFilteredItems();
   const appInfo = getAppInfo();
@@ -73,8 +68,6 @@ function App() {
           </div>
         </div>
 
-
-
         {/* Bottom Section - Full Width Table */}
         <div className="w-full">
           <div className="card">
@@ -92,19 +85,6 @@ function App() {
           </div>
         </div>
       </footer>
-      
-      {/* Info Modal */}
-      <InfoModal
-        isOpen={infoModal.isOpen}
-        onClose={hideInfoModal}
-        title={infoModal.title}
-        message={infoModal.message}
-        type={infoModal.type}
-        showCloseButton={infoModal.showCloseButton}
-      />
-      
-      {/* Import Modal */}
-      <ImportModal />
     </div>
   );
 }

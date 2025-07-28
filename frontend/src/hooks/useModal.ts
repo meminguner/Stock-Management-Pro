@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import Swal from 'sweetalert2';
 
 interface StockItem {
   id: string;
@@ -10,87 +11,7 @@ interface StockItem {
   updatedAt: Date;
 }
 
-interface ConfirmModalState {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  product?: StockItem;
-  confirmText: string;
-  cancelText: string;
-  type: 'delete' | 'warning' | 'info';
-  onConfirm?: () => void;
-}
-
-interface ImportModalState {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  productCount: number;
-  mergeText: string;
-  replaceText: string;
-  onMerge?: () => void;
-  onReplace?: () => void;
-}
-
-interface InfoModalState {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  showCloseButton: boolean;
-}
-
-// Singleton modal state
-let modalState = {
-  confirmModal: {
-    isOpen: false,
-    title: '',
-    message: '',
-    confirmText: 'Onayla',
-    cancelText: 'İptal',
-    type: 'delete' as const
-  },
-  importModal: {
-    isOpen: false,
-    title: '',
-    message: '',
-    productCount: 0,
-    mergeText: 'Mevcut verilere ekle',
-    replaceText: 'Mevcut verileri değiştir'
-  },
-  infoModal: {
-    isOpen: false,
-    title: '',
-    message: '',
-    type: 'info' as const,
-    showCloseButton: true
-  }
-};
-
-// Singleton listeners
-let listeners: (() => void)[] = [];
-
-const notifyListeners = () => {
-  listeners.forEach(listener => listener());
-};
-
 export const useModal = () => {
-  const [, forceUpdate] = useState({});
-
-  const updateState = useCallback((updater: (state: typeof modalState) => typeof modalState) => {
-    modalState = updater(modalState);
-    notifyListeners();
-  }, []);
-
-  // Subscribe to changes
-  useState(() => {
-    const listener = () => forceUpdate({});
-    listeners.push(listener);
-    return () => {
-      listeners = listeners.filter(l => l !== listener);
-    };
-  });
-
   const showConfirmModal = useCallback((
     title: string,
     message: string,
@@ -102,27 +23,64 @@ export const useModal = () => {
       type?: 'delete' | 'warning' | 'info';
     } = {}
   ) => {
-    updateState(state => ({
-      ...state,
-      confirmModal: {
-        isOpen: true,
-        title,
-        message,
-        product: options.product,
-        confirmText: options.confirmText || 'Onayla',
-        cancelText: options.cancelText || 'İptal',
-        type: options.type || 'delete',
-        onConfirm
-      }
-    }));
-  }, [updateState]);
+    const { product, confirmText = 'Onayla', cancelText = 'İptal', type = 'delete' } = options;
 
-  const hideConfirmModal = useCallback(() => {
-    updateState(state => ({
-      ...state,
-      confirmModal: { ...state.confirmModal, isOpen: false }
-    }));
-  }, [updateState]);
+    let html = `<p>${message}</p>`;
+    
+    if (product) {
+      html += `
+        <div style="
+          background: #f8f9fa;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 15px 0;
+          border-left: 4px solid #e74c3c;
+          text-align: left;
+          font-size: 14px;
+        ">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; color: #7f8c8d;">Ürün Adı:</span>
+            <span style="color: #2c3e50; font-weight: 500;">${product.name}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; color: #7f8c8d;">Ürün Kodu:</span>
+            <span style="color: #2c3e50; font-weight: 500; font-family: monospace;">${product.partNumber}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; color: #7f8c8d;">Kategori:</span>
+            <span style="color: #2c3e50; font-weight: 500;">
+              ${product.tags.length > 0 ? product.tags.join(', ') : '-'}
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600; color: #7f8c8d;">Stok:</span>
+            <span style="color: #2c3e50; font-weight: 500;">${product.stock}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    Swal.fire({
+      title: `⚠️ ${title}`,
+      html: html,
+      icon: type === 'delete' ? 'warning' : type === 'warning' ? 'warning' : 'info',
+      showCancelButton: true,
+      confirmButtonText: `🗑️ ${confirmText}`,
+      cancelButtonText: `❌ ${cancelText}`,
+      confirmButtonColor: '#e74c3c',
+      cancelButtonColor: '#95a5a6',
+      reverseButtons: true,
+      customClass: {
+        popup: 'swal2-custom-popup',
+        confirmButton: 'swal2-custom-confirm',
+        cancelButton: 'swal2-custom-cancel'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        onConfirm();
+      }
+    });
+  }, []);
 
   const showImportModal = useCallback((
     title: string,
@@ -135,31 +93,52 @@ export const useModal = () => {
       replaceText?: string;
     } = {}
   ) => {
-    console.log('showImportModal çağrıldı:', { title, message, productCount });
-    const newState = {
-      isOpen: true,
-      title,
-      message,
-      productCount,
-      mergeText: options.mergeText || 'Mevcut verilere ekle',
-      replaceText: options.replaceText || 'Mevcut verileri değiştir',
-      onMerge,
-      onReplace
-    };
-    console.log('Yeni state:', newState);
-    updateState(state => ({
-      ...state,
-      importModal: newState
-    }));
-    console.log('ImportModal state güncellendi');
-  }, [updateState]);
+    const { mergeText = 'Mevcut verilere ekle', replaceText = 'Mevcut verileri değiştir' } = options;
 
-  const hideImportModal = useCallback(() => {
-    updateState(state => ({
-      ...state,
-      importModal: { ...state.importModal, isOpen: false }
-    }));
-  }, [updateState]);
+    const html = `
+      <p>${message}</p>
+      <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+        ${productCount} ürün başarıyla yüklendi.
+      </p>
+      <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+        Mevcut verilerle nasıl birleştirmek istiyorsunuz?
+      </p>
+      <div style="
+        background-color: #f3f4f6;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        margin-top: 0.75rem;
+        font-size: 0.875rem;
+        color: #374151;
+      ">
+        <p><strong>${mergeText}:</strong> Mevcut verilere ekle (aynı ürünlerin adetleri artırılacak, olmayan yeni ürün yeni satır olarak işlenecek)</p>
+        <p style="margin-top: 0.5rem;"><strong>${replaceText}:</strong> Mevcut çalıştığınız tablo kaydedilip export edilip tablo temizlenip sonra yüklenen CSV artık yeni tablo olsun</p>
+      </div>
+    `;
+
+    Swal.fire({
+      title: title,
+      html: html,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: mergeText,
+      cancelButtonText: replaceText,
+      confirmButtonColor: '#27ae60',
+      cancelButtonColor: '#e74c3c',
+      reverseButtons: true,
+      customClass: {
+        popup: 'swal2-custom-popup',
+        confirmButton: 'swal2-custom-confirm',
+        cancelButton: 'swal2-custom-cancel'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        onMerge();
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        onReplace();
+      }
+    });
+  }, []);
 
   const showInfoModal = useCallback((
     title: string,
@@ -169,62 +148,55 @@ export const useModal = () => {
       showCloseButton?: boolean;
     } = {}
   ) => {
-    updateState(state => ({
-      ...state,
-      infoModal: {
-        isOpen: true,
-        title,
-        message,
-        type: options.type || 'info',
-        showCloseButton: options.showCloseButton !== false
+    const { type = 'info', showCloseButton = true } = options;
+
+    let icon: 'info' | 'success' | 'warning' | 'error' = 'info';
+    switch (type) {
+      case 'success':
+        icon = 'success';
+        break;
+      case 'warning':
+        icon = 'warning';
+        break;
+      case 'error':
+        icon = 'error';
+        break;
+      default:
+        icon = 'info';
+    }
+
+    Swal.fire({
+      title: title,
+      text: message,
+      icon: icon,
+      confirmButtonText: '✅ Tamam',
+      confirmButtonColor: type === 'success' ? '#27ae60' : 
+                         type === 'warning' ? '#f39c12' : 
+                         type === 'error' ? '#e74c3c' : '#3498db',
+      customClass: {
+        popup: 'swal2-custom-popup',
+        confirmButton: 'swal2-custom-confirm'
       }
-    }));
-  }, [updateState]);
+    });
+  }, []);
 
-  const hideInfoModal = useCallback(() => {
-    updateState(state => ({
-      ...state,
-      infoModal: { ...state.infoModal, isOpen: false }
-    }));
-  }, [updateState]);
-
-  const handleConfirmModalConfirm = useCallback(() => {
-    if (modalState.confirmModal.onConfirm) {
-      modalState.confirmModal.onConfirm();
-    }
-    hideConfirmModal();
-  }, [hideConfirmModal]);
-
-  const handleImportModalMerge = useCallback(() => {
-    console.log('handleImportModalMerge çağrıldı');
-    if (modalState.importModal.onMerge) {
-      console.log('onMerge fonksiyonu çalıştırılıyor');
-      modalState.importModal.onMerge();
-    }
-    hideImportModal();
-  }, [hideImportModal]);
-
-  const handleImportModalReplace = useCallback(() => {
-    console.log('handleImportModalReplace çağrıldı');
-    if (modalState.importModal.onReplace) {
-      console.log('onReplace fonksiyonu çalıştırılıyor');
-      modalState.importModal.onReplace();
-    }
-    hideImportModal();
-  }, [hideImportModal]);
+  // Eski modal state'lerini kaldırdık, artık SweetAlert2 kullanıyoruz
+  const confirmModal = { isOpen: false };
+  const importModal = { isOpen: false };
+  const infoModal = { isOpen: false };
 
   return {
-    confirmModal: modalState.confirmModal,
-    importModal: modalState.importModal,
-    infoModal: modalState.infoModal,
+    confirmModal,
+    importModal,
+    infoModal,
     showConfirmModal,
-    hideConfirmModal,
+    hideConfirmModal: () => {}, // SweetAlert2 otomatik kapanıyor
     showImportModal,
-    hideImportModal,
+    hideImportModal: () => {}, // SweetAlert2 otomatik kapanıyor
     showInfoModal,
-    hideInfoModal,
-    handleConfirmModalConfirm,
-    handleImportModalMerge,
-    handleImportModalReplace
+    hideInfoModal: () => {}, // SweetAlert2 otomatik kapanıyor
+    handleConfirmModalConfirm: () => {}, // Artık gerekli değil
+    handleImportModalMerge: () => {}, // Artık gerekli değil
+    handleImportModalReplace: () => {} // Artık gerekli değil
   };
 }; 

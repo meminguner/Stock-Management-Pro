@@ -284,8 +284,10 @@ export const useStockStore = create<StockStore>()(
             const newItems: StockItem[] = [];
             
             importedItems.forEach(importedItem => {
+              // Hem name hem de partNumber'a göre eşleştirme yap
               const existingIndex = existingItems.findIndex(item => 
-                item.partNumber === importedItem.partNumber
+                (item.name === importedItem.name && item.partNumber === importedItem.partNumber) ||
+                (item.partNumber === importedItem.partNumber && item.partNumber !== '?' && importedItem.partNumber !== '?')
               );
               
               if (existingIndex !== -1) {
