@@ -123,22 +123,6 @@ npm run preview
 - CSV import/export işlemleri tarayıcı tarafında yapılır
 - Responsive tasarım mobil uyumludur
 
-## 🤝 Katkıda Bulunma
-
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Commit yapın (`git commit -m 'Add amazing feature'`)
-4. Push yapın (`git push origin feature/amazing-feature`)
-5. Pull Request oluşturun
-
-## 📄 Lisans
-
-Bu proje MIT lisansı altında lisanslanmıştır.
-
-## 📞 İletişim
-
-Sorularınız için issue açabilir veya iletişime geçebilirsiniz.
-
 ---
 
 **Not**: Bu proje geliştirme aşamasındadır. Backend API entegrasyonu gelecekte eklenecektir. 
